@@ -2,58 +2,13 @@ from typing import Optional, Union, List, Dict
 import pandas as pd
 from faker import Faker
 import random
+import os
 
-# Vehicle data categories
-CAR_DATA = {
-    'Toyota': {
-        'models': ['Corolla', 'Camry', 'RAV4', 'Highlander', 'Prius', 'Land Cruiser'],
-        'origins': 'Japan'
-    },
-    'Honda': {
-        'models': ['Civic', 'Accord', 'CR-V', 'Pilot', 'Fit', 'Odyssey'],
-        'origins': 'Japan'
-    },
-    'Ford': {
-        'models': ['Fiesta', 'Focus', 'Fusion', 'Escape', 'Explorer', 'Mustang', 'F-150'],
-        'origins': 'USA'
-    },
-    'Chevrolet': {
-        'models': ['Spark', 'Malibu', 'Equinox', 'Traverse', 'Tahoe', 'Silverado'],
-        'origins': 'USA'
-    },
-    'BMW': {
-        'models': ['3 Series', '5 Series', '7 Series', 'X1', 'X3', 'X5', 'X7'],
-        'origins': 'Germany'
-    },
-    'Mercedes-Benz': {
-        'models': ['A-Class', 'C-Class', 'E-Class', 'S-Class', 'GLA', 'GLC', 'GLE'],
-        'origins': 'Germany'
-    },
-    'Audi': {
-        'models': ['A3', 'A4', 'A6', 'A8', 'Q3', 'Q5', 'Q7'],
-        'origins': 'Germany'
-    },
-    'Tesla': {
-        'models': ['Model 3', 'Model Y', 'Model S', 'Model X'],
-        'origins': 'USA'
-    },
-    'Hyundai': {
-        'models': ['Elantra', 'Sonata', 'Tucson', 'Santa Fe', 'Kona'],
-        'origins': 'South Korea'
-    },
-    'Kia': {
-        'models': ['Rio', 'Forte', 'Sportage', 'Sorento', 'Telluride'],
-        'origins': 'South Korea'
-    }
-}
-
-TRANSMISSIONS = ['Manual', 'Automatic', 'CVT', 'Dual-Clutch']
-COLORS = ['White', 'Black', 'Silver', 'Gray', 'Blue', 'Red', 'Green', 'Yellow', 'Orange', 'Brown']
 
 def generate_cars(
         n: int = 100,
         seed: Optional[int] = None,
-        currency: str = "USD",
+        external_data_path: Optional[str] = None,
         output_format: str = "dataframe"
 ) -> Union[pd.DataFrame, List[Dict], str]:
     """Generate deterministic synthetic car dataset."""
@@ -63,70 +18,69 @@ def generate_cars(
     valid_formats = ['dataframe', 'dict', 'csv', 'json']
     if output_format not in valid_formats:
         raise ValueError(f"output_format must be one of {valid_formats}")
+    
+    # Set deterministic randomness
+    if seed is not None:
+        random.seed(seed)
+        Faker.seed(seed)
 
     fake = Faker()
-    if seed is not None:
-        Faker.seed(seed)
-        random.seed(seed)
+   
+    # Load base data
+    if external_data_path and os.path.exists(external_data_path):
+        cars_df = pd.read_csv(external_data_path)
+    else:
+        # Load internal CSV shipped with the package
+        internal_path = os.path.join(os.path.dirname(__file__), "..", "data", "cars_base.csv")
+        if not os.path.exists(internal_path):
+            raise FileNotFoundError("Internal cars_base.csv not found in datagen/data/")
+        cars_df = pd.read_csv(internal_path)
 
-    cars = []
+    # Validate inputs
+    required_cols = {"make", "model", "base_price", "transmission", "fuel_type"}
+    if not required_cols.issubset(cars_df.columns):
+        raise ValueError(f"Input CSV must contain the following columns: {required_cols}")
+    
+    colors = [
+        "Black", "White", "Silver", "Blue", "Red", "Gray", "Green", "Beige", "Yellow", "Orange"
+    ]
+        
+    car_records = []
 
-    for _ in range(n):
-        make = random.choice(list(CAR_DATA.keys()))
-        model = random.choice(CAR_DATA[make]['models'])
-        origin = CAR_DATA[make]['origins']
+    for i in range(n):
+        row = cars_df.sample(n=1, random_state=seed + i if seed is not None else None).iloc[0]
 
-        # Deterministic attributes
-        year = random.randint(2005, 2025)
-        color = random.choice(COLORS)
-        transmission = random.choice(TRANSMISSIONS)
+        make = row["make"]
+        model = row["model"]
+        base_price = float(row["base_price"])
+        transmission = row["transmission"]
+        
+        # Synthetic attributes
+        year = random.randint(2010, 2025)
+        color = random.choice(colors)
+       
+        # Price variation (±20% depending on year)
+        price_flactuation = random.uniform(0.8, 1.2)
+        year_adjustment = 1 + ((year - 2015)) * 0.01
+        price = round(base_price * price_flactuation * year_adjustment, -2)
 
-        # Determine price range by brand tier
-        base_ranges = {
-            'Economy': (15000, 35000),
-            'Midrange': (30000, 60000),
-            'Luxury': (60000, 150000),
-            'EV': (40000, 130000)
+        record = {
+            "car_id": fake.uuid4(),
+            "make": make,
+            "model": model,
+            "year": year,
+            "color": color,
+            "transmission_type": transmission,
+            "price": price
         }
 
-        if make in ['Toyota', 'Honda', 'Hyundai', 'Kia', 'Ford', 'Chevrolet']:
-            price_min, price_max = base_ranges['Economy']
-        elif make in ['BMW', 'Mercedes-Benz', 'Audi']:
-            price_min, price_max = base_ranges['Luxury']
-        elif make == 'Tesla':
-            price_min, price_max = base_ranges['EV']
-        else:
-            price_min, price_max = base_ranges['Midrange']
+        car_records.append(record)
 
-        # Price influenced by year and transmission
-        price = random.randint(price_min, price_max)
-        if year > 2020:
-            price *= 1.1
-        if transmission in ['Manual']:
-            price *= 0.9
-
-        price = round(price, -2)  # round to nearest hundred
-
-        car_record = {
-            'car_id': fake.uuid4(),
-            'make': make,
-            'model': model,
-            'year': year,
-            'color': color,
-            'transmission': transmission,
-            'origin_country': origin,
-            'currency': currency,
-            'price': int(price),
-            'vin': fake.unique.bothify(text='?#??#####?#??????', letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ'),
-            'created_at': fake.date_time_this_year().strftime('%Y-%m-%d %H:%M:%S')
-        }
-
-        cars.append(car_record)
-
+    # Convert to requested format
     if output_format == 'dict':
-        return cars
+        return car_records
 
-    df = pd.DataFrame(cars)
+    df = pd.DataFrame(car_records)
 
     if output_format == 'dataframe':
         return df
