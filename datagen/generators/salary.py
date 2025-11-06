@@ -52,7 +52,7 @@ JOB_TITLES = {
 }
 
 # Employee levels with typical salary ranges (USD)
-LEVEL_RANGES = {
+LEVEL_RANGES_USD = {
     'Junior': {'base': (50000, 70000), 'bonus_pct': (0, 10)},
     'Mid': {'base': (70000, 100000), 'bonus_pct': (5, 15)},
     'Senior': {'base': (100000, 150000), 'bonus_pct': (10, 20)},
@@ -63,6 +63,19 @@ LEVEL_RANGES = {
     'Director': {'base': (180000, 250000), 'bonus_pct': (25, 35)},
     'VP': {'base': (220000, 350000), 'bonus_pct': (30, 50)},
     'C-Level': {'base': (300000, 500000), 'bonus_pct': (40, 80)}
+}
+
+LEVEL_RANGES_KES = {
+    'Junior': {'base': (600000, 1200000), 'bonus_pct': (0, 5)},
+    'Mid': {'base': (1200000, 2400000), 'bonus_pct': (3, 10)},
+    'Senior': {'base': (2400000, 4000000), 'bonus_pct': (5, 15)},
+    'Lead': {'base': (4000000, 5500000), 'bonus_pct': (10, 20)},
+    'Principal': {'base': (5500000, 7500000), 'bonus_pct': (10, 25)},
+    'Manager': {'base': (3000000, 5000000), 'bonus_pct': (10, 20)},
+    'Senior Manager': {'base': (5000000, 7000000), 'bonus_pct': (15, 25)},
+    'Director': {'base': (7000000, 10000000), 'bonus_pct': (20, 30)},
+    'VP': {'base': (10000000, 15000000), 'bonus_pct': (25, 40)},
+    'C-Level': {'base': (15000000, 30000000), 'bonus_pct': (30, 60)}
 }
 
 # Determine employee salary based on job title
@@ -107,15 +120,18 @@ def generate_salaries(
         if output_format not in valid_formats:
             raise ValueError(f"output_format must be one of {valid_formats}")
         
+        # Pick correct ranges
+        LEVEL_RANGES =LEVEL_RANGES_KES if currency == "KES" else LEVEL_RANGES_USD
+        
         # Initialize Faker with seed for reproducibility
-        fake = Faker()
+        fake = Faker(locale)
         if seed is not None:
             Faker.seed(seed)
             random.seed(seed)
 
         salaries = []
 
-        for i in range(n):
+        for _ in range(n):
             # Select random department and job title
             department = random.choice(list(JOB_TITLES.keys()))
             job_title = random.choice(JOB_TITLES[department])
@@ -194,7 +210,4 @@ if __name__ == "__main__":
     print("Generating 10 Kenya-localized salary records...")
     salaries = generate_salaries(n=10, seed=42, locale="en_KE", currency="KES")
     print(salaries)
-    print(f"\nGenerated {len(salaries)} salary records")
-    print(f"Columns: {list(salaries.columns)}")
-
     save_data(salaries, "./output/salaries.csv", file_format="csv")
