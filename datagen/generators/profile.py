@@ -2,7 +2,7 @@ from typing import Optional, Union, List, Dict
 import pandas as pd
 from faker import Faker
 import random
-from datagen.utils.io import save_data
+from datagen.utils.io import save_data  # DRY utility for saving
 
 def generate_profiles(
         n: int = 100,
@@ -11,39 +11,47 @@ def generate_profiles(
         output_format: str = "dataframe"
 ) -> Union[pd.DataFrame, List[Dict], str]:
     """
-    Generate synthetic user profile data deterministically.
+    Generate synthetic user profile data localized to Kenya.
+
+    Each profile includes realistic Kenyan names, addresses, coordinates, and contact details.
 
     Args:
-        n (int): Number of profiles to generate. Default = 100.
+        n (int): Number of profiles to generate.
         seed (Optional[int]): Random seed for reproducibility.
-        locale (str): Faker locale for regional data variation. Default = 'en_KE'.
-        output_format (str): Format of returned data: 'dataframe', 'dict', 'csv', 'json'.
+        locale (str): Locale for Faker (default 'en_KE').
+        output_format (str): Output format ('dataframe', 'dict', 'csv', 'json').
 
     Returns:
-        Union[pd.DataFrame, List[Dict], str]: Generated data in the specified format.
+        Union[pd.DataFrame, List[Dict], str]: Generated data in the requested format.
     """
-    
+
     # Validate inputs
     if n < 1:
-        raise ValueError("Number of profiles (n) must be atleast 1")
-    
+        raise ValueError("Number of profiles (n) must be at least 1.")
+
     valid_formats = ['dataframe', 'dict', 'csv', 'json']
     if output_format not in valid_formats:
         raise ValueError(f"output_format must be one of {valid_formats}")
-    
-    # Initialize Faker with seed for reproducibility
+
+    # Initialize Faker for Kenya with reproducibility
     fake = Faker(locale)
     if seed is not None:
         Faker.seed(seed)
         random.seed(seed)
 
-    genders = ['Male', 'Female', 'Non-binary']
+    # Kenyan city list for realism
+    kenyan_cities = [
+        "Nairobi", "Mombasa", "Kisumu", "Nakuru", "Eldoret",
+        "Thika", "Machakos", "Nyeri", "Garissa", "Naivasha"
+    ]
+
     profiles = []
+    genders = ['Male', 'Female', 'Non-binary']
 
     for _ in range(n):
         gender = random.choice(genders)
 
-        # Generate name based on gender
+        # Gendered first names
         if gender == 'Male':
             first_name = fake.first_name_male()
         elif gender == 'Female':
@@ -54,20 +62,28 @@ def generate_profiles(
         last_name = fake.last_name()
         full_name = f"{first_name} {last_name}"
 
-        # contact info
+        # Generate contact info
         username = f"{first_name.lower()}.{last_name.lower()}{random.randint(1, 999)}"
         email = f"{username}@{fake.free_email_domain()}"
 
-        # date of birth
+        # Birth date and age
         dob = fake.date_of_birth(minimum_age=18, maximum_age=80)
         from datetime import date
         today = date.today()
         age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
 
-        # Generate address
-        address = fake.address().replace('\n', ', ')
+        # Location and address (Kenya-scoped)
+        city = random.choice(kenyan_cities)
+        state = "Kenya"
+        postal_code = fake.postcode()
+        street_address = fake.street_address()
+        country = "Kenya"
 
-        # Create profile dictionary
+        # Geo realism — bounding box for Kenya
+        latitude = round(random.uniform(-4.7, 5.0), 6)
+        longitude = round(random.uniform(34.0, 41.9), 6)
+
+        # Compile profile record
         profile = {
             'profile_id': fake.uuid4(),
             'first_name': first_name,
@@ -79,22 +95,22 @@ def generate_profiles(
             'date_of_birth': dob.strftime('%Y-%m-%d'),
             'age': age,
             'phone': fake.phone_number(),
-            'street_address': fake.street_address(),
-            'city': fake.city(),
-            'state': fake.state(),
-            'postal_code': fake.postcode(),
-            'country': fake.country(),
-            'latitude': float(fake.latitude()),
-            'longitude': float(fake.longitude()),
-            'created_at': fake.date_time_this_year().strftime('%Y-%m-%d %H:%M:%S')
+            'street_address': street_address,
+            'city': city,
+            'state': state,
+            'postal_code': postal_code,
+            'country': country,
+            'latitude': latitude,
+            'longitude': longitude,
+            'created_at': fake.date_time_between(start_date='-2y', end_date='now').strftime('%Y-%m-%d %H:%M:%S')
         }
 
         profiles.append(profile)
 
-    # Return in the requested format
+    # Convert to desired output format
     if output_format == 'dict':
         return profiles
-    
+
     df = pd.DataFrame(profiles)
 
     if output_format == 'dataframe':
@@ -104,32 +120,21 @@ def generate_profiles(
     elif output_format == 'json':
         return df.to_json(orient='records', indent=2)
 
+
 def save_profiles(
         profiles: Union[pd.DataFrame, List[Dict]],
         filename: str,
         file_format: Optional[str] = None
-) -> str:
-    
+) -> None:
     """
-    Save generated profiles using the shared save_data utility.
-
-    Args:
-        profiles (Union[pd.DataFrame, List[Dict]]): Generated profile data.
-        filename (str): Destination filename (e.g., './output/profiles.csv').
-        file_format (Optional[str]): Format override. Inferred if None.
-
-    Returns:
-        str: Absolute path to saved file.
+    Save generated profiles using the shared I/O utility.
     """
-    return save_data(profiles, filename, file_format)
-    
-   
+    save_data(profiles, filename, file_format)
+
 
 if __name__ == "__main__":
-    print("Generating 10 sample profiles...")
+    print("Generating 10 Kenya-localized sample profiles...")
     profiles = generate_profiles(n=10, seed=42)
-    print(profiles)
+    print(profiles.head())
     print(f"\nGenerated {len(profiles)} profiles")
     print(f"Columns: {list(profiles.columns)}")
-    
-    save_profiles(profiles, "./output/sample_profiles.csv")
