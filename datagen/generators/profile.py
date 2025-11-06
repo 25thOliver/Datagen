@@ -121,17 +121,6 @@ def generate_profiles(
         return df.to_json(orient='records', indent=2)
 
 
-def save_profiles(
-        profiles: Union[pd.DataFrame, List[Dict]],
-        filename: str,
-        file_format: Optional[str] = None
-) -> None:
-    """
-    Save generated profiles using the shared I/O utility.
-    """
-    save_data(profiles, filename, file_format)
-
-
 if __name__ == "__main__":
     print("Generating 10 Kenya-localized sample profiles...")
     profiles = generate_profiles(n=10, seed=42, locale="en_KE")
