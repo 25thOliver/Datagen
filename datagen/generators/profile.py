@@ -2,6 +2,7 @@ from typing import Optional, Union, List, Dict
 import pandas as pd
 from faker import Faker
 import random
+from datagen.utils.io import save_data
 
 def generate_profiles(
         n: int = 100,
@@ -9,6 +10,18 @@ def generate_profiles(
         locale: str = "en_KE",
         output_format: str = "dataframe"
 ) -> Union[pd.DataFrame, List[Dict], str]:
+    """
+    Generate synthetic user profile data deterministically.
+
+    Args:
+        n (int): Number of profiles to generate. Default = 100.
+        seed (Optional[int]): Random seed for reproducibility.
+        locale (str): Faker locale for regional data variation. Default = 'en_KE'.
+        output_format (str): Format of returned data: 'dataframe', 'dict', 'csv', 'json'.
+
+    Returns:
+        Union[pd.DataFrame, List[Dict], str]: Generated data in the specified format.
+    """
     
     # Validate inputs
     if n < 1:
@@ -24,11 +37,10 @@ def generate_profiles(
         Faker.seed(seed)
         random.seed(seed)
 
-    profiles = []
     genders = ['Male', 'Female', 'Non-binary']
+    profiles = []
 
-    for i in range(n):
-        # Generate basic profile info
+    for _ in range(n):
         gender = random.choice(genders)
 
         # Generate name based on gender
@@ -42,11 +54,11 @@ def generate_profiles(
         last_name = fake.last_name()
         full_name = f"{first_name} {last_name}"
 
-        # Generate contact info
+        # contact info
         username = f"{first_name.lower()}.{last_name.lower()}{random.randint(1, 999)}"
         email = f"{username}@{fake.free_email_domain()}"
 
-        # Generate date of birth
+        # date of birth
         dob = fake.date_of_birth(minimum_age=18, maximum_age=80)
         from datetime import date
         today = date.today()
@@ -79,7 +91,7 @@ def generate_profiles(
 
         profiles.append(profile)
 
-    # Convert to requested format
+    # Return in the requested format
     if output_format == 'dict':
         return profiles
     
@@ -96,41 +108,22 @@ def save_profiles(
         profiles: Union[pd.DataFrame, List[Dict]],
         filename: str,
         file_format: Optional[str] = None
-) -> None:
+) -> str:
     
-    # Convert to DataFrame if needed
-    if isinstance(profiles, list):
-        df = pd.DataFrame(profiles)
-    else:
-        df = profiles
+    """
+    Save generated profiles using the shared save_data utility.
 
-    # Infer format from filename if not specified
-    if file_format is None:
-        if filename.endswith('.csv'):
-            file_format = 'csv'
-        elif filename.endswith('.json'):
-            file_format = 'json'
-        elif filename.endswith(('.xlsx', '.xls')):
-            file_format = 'excel'
-        elif filename.endswith('.parquet'):
-            file_format = 'parquet'
-        else:
-            file_format = 'csv'
-    
-    # Save to file
-    if file_format == 'csv':
-        df.to_csv(filename, index=False)
-    elif file_format == 'json':
-        df.to_json(filename, orient='records', indent=2)
-    elif file_format == 'excel':
-        df.to_excel(filename, index=False)
-    elif file_format == 'parquet':
-        df.to_parquet(filename, index=False)
-    else:
-        raise ValueError(f"Unsupported file format: {file_format}")
-    
+    Args:
+        profiles (Union[pd.DataFrame, List[Dict]]): Generated profile data.
+        filename (str): Destination filename (e.g., './output/profiles.csv').
+        file_format (Optional[str]): Format override. Inferred if None.
 
-    print(f"Saved {len(df)} profiles to {filename}")
+    Returns:
+        str: Absolute path to saved file.
+    """
+    return save_data(profiles, filename, file_format)
+    
+   
 
 if __name__ == "__main__":
     print("Generating 10 sample profiles...")
@@ -139,3 +132,4 @@ if __name__ == "__main__":
     print(f"\nGenerated {len(profiles)} profiles")
     print(f"Columns: {list(profiles.columns)}")
     
+    save_profiles(profiles, "./output/sample_profiles.csv")
