@@ -3,15 +3,29 @@ import pandas as pd
 from faker import Faker
 import random
 import os
+from datagen.utils.io import save_data
 
+# Common vehicles in Kenyan Market
+KENYA_CAR_BASE = [
+    {"make": "Toyota", "model": "Corolla", "base_price": 1800000, "transmission": "Automatic", "fuel_type": "Petrol"},
+    {"make": "Toyota", "model": "Probox", "base_price": 1200000, "transmission": "Manual", "fuel_type": "Petrol"},
+    {"make": "Nissan", "model": "Note", "base_price": 1400000, "transmission": "Automatic", "fuel_type": "Petrol"},
+    {"make": "Mazda", "model": "Demio", "base_price": 1500000, "transmission": "Automatic", "fuel_type": "Petrol"},
+    {"make": "Subaru", "model": "Forester", "base_price": 2500000, "transmission": "Automatic", "fuel_type": "Petrol"},
+    {"make": "Mitsubishi", "model": "Outlander", "base_price": 2700000, "transmission": "Automatic", "fuel_type": "Diesel"},
+    {"make": "Volkswagen", "model": "Passat", "base_price": 2200000, "transmission": "Automatic", "fuel_type": "Petrol"},
+    {"make": "BMW", "model": "X3", "base_price": 4500000, "transmission": "Automatic", "fuel_type": "Diesel"},
+    {"make": "Mercedes-Benz", "model": "C-Class", "base_price": 5500000, "transmission": "Automatic", "fuel_type": "Petrol"},
+    {"make": "Isuzu", "model": "D-Max", "base_price": 3200000, "transmission": "Manual", "fuel_type": "Diesel"}
+]
 
 def generate_cars(
         n: int = 100,
         seed: Optional[int] = None,
-        external_data_path: Optional[str] = None,
         output_format: str = "dataframe"
 ) -> Union[pd.DataFrame, List[Dict], str]:
     """Generate deterministic synthetic car dataset."""
+
     if n < 1:
         raise ValueError("Number of cars (n) must be at least 1")
 
@@ -26,43 +40,27 @@ def generate_cars(
 
     fake = Faker()
    
-    # Load base data
-    if external_data_path and os.path.exists(external_data_path):
-        cars_df = pd.read_csv(external_data_path)
-    else:
-        # Load internal CSV shipped with the package
-        internal_path = os.path.join(os.path.dirname(__file__), "..", "data", "cars_base.csv")
-        if not os.path.exists(internal_path):
-            raise FileNotFoundError("Internal cars_base.csv not found in datagen/data/")
-        cars_df = pd.read_csv(internal_path)
-
-    # Validate inputs
-    required_cols = {"make", "model", "base_price", "transmission", "fuel_type"}
-    if not required_cols.issubset(cars_df.columns):
-        raise ValueError(f"Input CSV must contain the following columns: {required_cols}")
+    colors = ["Black", "White", "Silver", "Blue", "Red", "Gray", "Green", "Beige", "Maroon"]
+    dealer_cities = ["Nairobi", "Mombasa", "Kisumu", "Eldoret", "Nakuru"]
     
-    colors = [
-        "Black", "White", "Silver", "Blue", "Red", "Gray", "Green", "Beige", "Yellow", "Orange"
-    ]
         
-    car_records = []
+    records = []
 
     for i in range(n):
-        row = cars_df.sample(n=1, random_state=seed + i if seed is not None else None).iloc[0]
-
-        make = row["make"]
-        model = row["model"]
-        base_price = float(row["base_price"])
-        transmission = row["transmission"]
+        car = random.choice(KENYA_CAR_BASE)
+        make, model = car["make"], car["model"]
+        base_price = car["base_price"]
+        transmission = car["transmission"]
+        fuel_type = car["fuel_type"]
         
         # Synthetic attributes
-        year = random.randint(2010, 2025)
+        year = random.randint(2008, 2025)
         color = random.choice(colors)
+        dealer_city = random.choice(dealer_cities)
        
-        # Price variation (±20% depending on year)
-        price_flactuation = random.uniform(0.8, 1.2)
-        year_adjustment = 1 + ((year - 2015)) * 0.01
-        price = round(base_price * price_flactuation * year_adjustment, -2)
+        # Simulate depreciation or appreciation
+        age_factor = 1 - ((2025 - year) * 0.03)
+        price_kes = max(500000, round(base_price * age_factor * random.uniform(0.9, 1.1), -4))
 
         record = {
             "car_id": fake.uuid4(),
@@ -71,67 +69,30 @@ def generate_cars(
             "year": year,
             "color": color,
             "transmission_type": transmission,
-            "price": price
+            "fuel_type": fuel_type,
+            "assembled_in": "Japan",
+            "dealer_city": dealer_city,
+            "price_kes": price_kes
         }
+        records.append(record)
 
-        car_records.append(record)
+    df = pd.DataFrame(records)
 
     # Convert to requested format
-    if output_format == 'dict':
-        return car_records
-
-    df = pd.DataFrame(car_records)
-
-    if output_format == 'dataframe':
+    if output_format == "dataframe":
         return df
-    elif output_format == 'csv':
+    elif output_format == "csv":
         return df.to_csv(index=False)
-    elif output_format == 'json':
-        return df.to_json(orient='records', indent=2)
-
-
-def save_cars(
-        cars: Union[pd.DataFrame, List[Dict]],
-        filename: str,
-        file_format: Optional[str] = None
-) -> None:
-    """Save generated car data to file in multiple formats."""
-    if isinstance(cars, list):
-        df = pd.DataFrame(cars)
-    else:
-        df = cars
-
-    if file_format is None:
-        if filename.endswith('.csv'):
-            file_format = 'csv'
-        elif filename.endswith('.json'):
-            file_format = 'json'
-        elif filename.endswith(('.xlsx', '.xls')):
-            file_format = 'excel'
-        elif filename.endswith('.parquet'):
-            file_format = 'parquet'
-        else:
-            file_format = 'csv'
-
-    if file_format == 'csv':
-        df.to_csv(filename, index=False)
-    elif file_format == 'json':
-        df.to_json(filename, orient='records', indent=2)
-    elif file_format == 'excel':
-        df.to_excel(filename, index=False)
-    elif file_format == 'parquet':
-        df.to_parquet(filename, index=False)
-    else:
-        raise ValueError(f"Unsupported file format: {file_format}")
-
-    print(f"✓ Saved {len(df)} car records to {filename}")
-
+    elif output_format == "json":
+        return df.to_json(orient="records", indent=2)
+    elif output_format == "dict":
+        return records
 
 if __name__ == "__main__":
-    print("Generating 10 sample cars...")
+    print("Generating 10 Kenya-market cars...")
     cars = generate_cars(n=10, seed=42)
     print(cars)
     print(f"\nGenerated {len(cars)} cars")
     print(f"Columns: {list(cars.columns)}")
-    print("\nSample summary:")
-    print(cars[['make', 'model', 'year', 'price']].head().to_string(index=False))
+    save_data(cars, filename="./output/kenyan_cars.csv", file_format="csv")
+    print("\nCommon cars in the Kenyan market successfully generated and saved!")
