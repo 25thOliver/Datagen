@@ -2,7 +2,7 @@ from typing import Optional, Union, List, Dict
 import pandas as pd
 from faker import Faker
 import random
-from datagen.utils.io import save_data  # DRY utility for saving
+from datagen.utils.io import save_data 
 
 def generate_profiles(
         n: int = 100,
@@ -134,7 +134,9 @@ def save_profiles(
 
 if __name__ == "__main__":
     print("Generating 10 Kenya-localized sample profiles...")
-    profiles = generate_profiles(n=10, seed=42)
+    profiles = generate_profiles(n=10, seed=42, locale="en_KE")
     print(profiles.head())
     print(f"\nGenerated {len(profiles)} profiles")
     print(f"Columns: {list(profiles.columns)}")
+
+    save_data(profiles, "./output/profiles.csv", file_format="csv")
