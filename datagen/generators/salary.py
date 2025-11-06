@@ -2,6 +2,7 @@ from typing import Optional, Union, List, Dict
 import pandas as pd
 from faker import Faker
 import random
+from datagen.utils.io import save_data
 
 # Job titles by department
 JOB_TITLES = {
@@ -89,12 +90,15 @@ def determine_level(job_title: str) -> str:
     else:
         return 'Mid'
     
+# Salary Generator    
 def generate_salaries(
         n: int=100,
         seed: Optional[int] = None,
-        currency: str = "USD",
+        locale: str = "en_KE",
+        currency: str = "KES",
         output_format: str = "dataframe"
 ) -> Union[pd.DataFrame, List[Dict], str]:
+        
     # Validate inputs
         if n < 1:
             raise ValueError("Number of salary records (n) must be atleast 1")
@@ -185,52 +189,12 @@ def generate_salaries(
         elif output_format == 'json':
             return df.to_json(orient='records', indent=2)
         
-def save_salaries(
-        salaries: Union[pd.DataFrame, List[Dict]],
-        filename: str,
-        file_format: Optional[str] = None
-) -> None:
-    
-    # Convert to DataFrame if needed
-    if isinstance(salaries, list):
-        df = pd.DataFrame(salaries)
-    else:
-        df = salaries
-    
-    # Infer format from filename if not specified
-    if file_format is None:
-        if filename.endswith('.csv'):
-            file_format = 'csv'
-        elif filename.endswith('.json'):
-            file_format = 'json'
-        elif filename.endswith(('.xlsx', '.xls')):
-            file_format = 'excel'
-        elif filename.endswith('.parquet'):
-            file_format = 'parquet'
-        else:
-            file_format = 'csv'
-    
-    # Save to file
-    if file_format == 'csv':
-        df.to_csv(filename, index=False)
-    elif file_format == 'json':
-        df.to_json(filename, orient='records', indent=2)
-    elif file_format == 'excel':
-        df.to_excel(filename, index=False)
-    elif file_format == 'parquet':
-        df.to_parquet(filename, index=False)
-    else:
-        raise ValueError(f"Unsupported file format: {file_format}")
-    
-    print(f"✓ Saved {len(df)} salary records to {filename}")
-
 
 if __name__ == "__main__":
-    # Example usage
-    print("Generating 10 sample salary records...")
-    salaries = generate_salaries(n=10, seed=42)
+    print("Generating 10 Kenya-localized salary records...")
+    salaries = generate_salaries(n=10, seed=42, locale="en_KE", currency="KES")
     print(salaries)
     print(f"\nGenerated {len(salaries)} salary records")
     print(f"Columns: {list(salaries.columns)}")
-    print(f"\nSalary statistics:")
-    print(salaries[['level', 'base_salary', 'bonus', 'total_compensation']].describe())
+
+    save_data(salaries, "./output/salaries.csv", file_format="csv")
