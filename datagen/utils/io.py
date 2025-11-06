@@ -48,6 +48,19 @@ def save_data(
     else:
         raise TypeError("Input 'data' must be a pandas DataFrame or a list of dictionaries.")
     
+    # Auto-detect file format
+    if file_format is None:
+        if filename.endswith('.csv'):
+            file_format = 'csv'
+        elif filename.endswith('.json'):
+            file_format = 'json'
+        elif filename.endswith(('.xlsx', '.xls')):
+            file_format = 'excel'
+        elif filename.endswith('.parquet'):
+            file_format = 'parquet'
+        else:
+            file_format = 'csv'
+    
     # Create dictionary if it doesn't exist
     output_dir = os.path.dirname(filename)
     if output_dir and not os.path.exists(output_dir):
@@ -67,8 +80,10 @@ def save_data(
             df.to_parquet(filename, index=False)
         else:
             raise ValueError(f"Unsupported file format: '{file_format}'. Must be one of 'csv', 'json', 'excel', 'parquet'.")
-            
-        print(f"Successfully saved {len(df)} records to {filename}")
+
+        abs_path = os.path.abspath(filename)    
+        print(f"Successfully saved {len(df)} records to {abs_path}")
+        return abs_path
 
     except ImportError as e:
         print(f"Error: Missing dependency for format '{file_format}'. {e}")
