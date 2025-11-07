@@ -1,9 +1,60 @@
+"""
+Synthetic car dataset generator for the `datagen` package.
+
+This module generates realistic car data combining manufacturer metadata,
+Faker-powered randomization, and optional augmentation from external CSV data
+(e.g., Kaggle datasets). It supports deterministic generation via random seeds.
+
+Example:
+    >>> from datagen.generators.car import generate_cars
+    >>> cars = generate_cars(n=25, seed=42)
+    >>> print(cars.head())
+
+Typical fields:
+    - car_id
+    - make
+    - model
+    - year
+    - color
+    - transmission_type
+    - price_ke
+    - assembled_in
+    - dealer_city
+    - fuel_type
+"""
+
 from typing import Optional, Union, List, Dict
 import pandas as pd
 from faker import Faker
 import random
 import os
 from datagen.utils.io import save_data
+
+"""
+Generate synthetic car data combining real-world base information and
+    randomized attributes for variety and realism.
+
+    The generator uses a hybrid model:
+        - Deterministic randomization via Faker and controlled seeds.
+        - Augmentation from a reference CSV (if available).
+
+    Args:
+        n (int): Number of car records to generate.
+        seed (Optional[int]): Random seed for reproducibility.
+        use_external_data (bool): Whether to augment with `cars_base.csv`.
+        output_format (str): Output format — one of ['dataframe', 'dict', 'csv', 'json'].
+
+    Returns:
+        Union[pd.DataFrame, List[Dict], str]: The generated car dataset.
+
+    Raises:
+        ValueError: If `n < 1` or `output_format` is invalid.
+        FileNotFoundError: If `use_external_data` is True but base CSV is missing.
+
+    Example:
+        >>> cars = generate_cars(n=5, seed=123)
+        >>> cars[['make', 'model', 'year', 'price']]
+"""
 
 # Common vehicles in Kenyan Market
 KENYA_CAR_BASE = [
