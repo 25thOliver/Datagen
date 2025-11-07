@@ -552,5 +552,7 @@ Future enhancements planned:
 - [ ] Web UI for interactive generation
 - [ ] More export formats (SQL, Avro)
 - [ ] Data quality validation tools
+- [ ] Kubernetes deployment examples
+- [ ] Cloud deployment guides (AWS, GCP, Azure)
 
 ---
