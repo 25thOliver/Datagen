@@ -1,7 +1,58 @@
+"""
+Generates structured regional data including region codes, countries,
+time zones, and assigned regional managers.
+
+This module helps create global organizational region datasets useful
+for business intelligence testing or analytics pipeline demos.
+
+Example:
+    >>> from datagen.generators.region import generate_regions
+    >>> df = generate_regions(include_all=True, seed=42)
+    >>> print(df[['region_name', 'hq_city']])
+
+Typical fields:
+    - region_id
+    - region_name
+    - region_code
+    - countries
+    - country_count
+    - primary_timezone
+    - all_timezones
+    - hq_city
+    - hq_country
+    - regional_manager
+    - manager_email
+    - established_date
+"""
+
 from typing import Optional, Union, List, Dict
 import pandas as pd
 from faker import Faker
 import random
+from datagen.utils.io import save_data
+
+"""
+Generate synthetic global region data (e.g., North America, Europe, Asia Pacific).
+
+    The function returns region information including country membership, time zones,
+    and a fictional regional manager for each region.
+
+    Args:
+        n (Optional[int]): Number of regions to sample (ignored if include_all=True).
+        seed (Optional[int]): Random seed for reproducibility.
+        include_all (bool): If True, generates all predefined regions.
+        output_format (str): Output format — one of ['dataframe', 'dict', 'csv', 'json'].
+
+    Returns:
+        Union[pd.DataFrame, List[Dict], str]: Generated region data.
+
+    Raises:
+        ValueError: If `output_format` is invalid.
+
+    Example:
+        >>> regions = generate_regions(seed=42)
+        >>> regions[['region_name', 'hq_city', 'regional_manager']]
+"""
 
 # Global regions with their countries
 REGIONS = {
@@ -136,48 +187,7 @@ def generate_regions(
     elif output_format == 'json':
         return df.to_json(orient='records', indent=2)
 
-
-def save_regions(
-        regions: Union[pd.DataFrame, List[Dict]],
-        filename: str,
-        file_format: Optional[str] = None
-) -> None:
-    
-    # Convert to DataFrame if needed
-    if isinstance(regions, list):
-        df = pd.DataFrame(regions)
-    else:
-        df = regions
-    
-    # Infer format from filename if not specified
-    if file_format is None:
-        if filename.endswith('.csv'):
-            file_format = 'csv'
-        elif filename.endswith('.json'):
-            file_format = 'json'
-        elif filename.endswith(('.xlsx', '.xls')):
-            file_format = 'excel'
-        elif filename.endswith('.parquet'):
-            file_format = 'parquet'
-        else:
-            file_format = 'csv'
-    
-    # Save to file
-    if file_format == 'csv':
-        df.to_csv(filename, index=False)
-    elif file_format == 'json':
-        df.to_json(filename, orient='records', indent=2)
-    elif file_format == 'excel':
-        df.to_excel(filename, index=False)
-    elif file_format == 'parquet':
-        df.to_parquet(filename, index=False)
-    else:
-        raise ValueError(f"Unsupported file format: {file_format}")
-    
-    print(f"✓ Saved {len(df)} region records to {filename}")
-
 if __name__ == "__main__":
-    # Example usage
     print("Generating all global regions...")
     regions = generate_regions(seed=42)
     print(regions)
@@ -185,3 +195,5 @@ if __name__ == "__main__":
     print(f"Columns: {list(regions.columns)}")
     print(f"\nRegion summary:")
     print(regions[['region_name', 'region_code', 'country_count', 'hq_city']].to_string(index=False))
+    save_data(regions, filename="./output/regions.csv", file_format="csv")
+    print("\nRegions data successfully generated and saved!")
