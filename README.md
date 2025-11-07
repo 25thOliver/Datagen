@@ -16,6 +16,7 @@ A Python library for generating realistic synthetic datasets for testing, analyt
 - **Localized** - Kenya-focused data with local context
 - **Well-documented** - Comprehensive docstrings and examples
 - **Type-safe** - Full type hints for better IDE support
+- **Containerized** - Docker support for easy development
 
 ## Installation
 
@@ -37,6 +38,87 @@ pip install -e .
 
 ```bash
 pip install -e ".[dev]"
+```
+
+## Using Docker
+
+DataGen includes Docker support for containerized development and deployment.
+
+### Quick Start with Docker
+
+```bash
+# Clone the repository
+git clone https://github.com/25thOliver/Datagen.git
+cd Datagen
+
+# Build and run with Docker Compose
+docker-compose up -d
+
+# Access the container
+docker-compose exec datagen bash
+
+# Inside the container, use datagen
+python -c "from datagen import generate_profiles; print(generate_profiles(n=10))"
+        or
+python -m datagen.generators.profle
+```
+
+### Using Dockerfile Directly
+
+```bash
+# Build the Docker image
+docker build -t datagen:latest .
+
+# Run the container
+docker run -it --rm \
+  -v $(pwd):/app \
+  -v datagen-cache:/root/.cache \
+  datagen:latest
+
+# Inside the container
+python -c "from datagen import generate_profiles; print(generate_profiles(n=10))"
+```
+
+### Docker Configuration
+
+**Dockerfile features**
+
+- Base image: `python:3.11-slim`
+- Includes git for version control
+- Installs all dependencies from `requirements.txt`
+- Install datagen in development mode
+- Optimized layer caching for faster builds
+- Optimized layer caching for faster builds
+- Unbuffered Python output for real-time logs
+
+**docker-compose.yml Features:**
+
+- Servive name: `datagen`
+- Container name: `datagen-dev`
+- Volume mounting for live coding changes
+- Cache volume for pip packages
+- Interactive terminal support(stdin_open, tty)
+- Working directory: `/app`
+
+### Docker Use Cases
+
+**1. Development Environment**
+```bash
+# Start development container
+docker-compose up -d
+
+# Run tests
+docker-compose exec datagen pytest tests/
+
+# Generate data
+docker-compose exec datagen python -c "
+from datagen import generate_profiles, save_data
+df = generate_profiles(n=1000)
+save_data(df, 'output/profiles.csv')
+"
+
+# Stop container
+docker-compose down
 ```
 
 ## Quick Start
@@ -392,10 +474,6 @@ Please ensure:
 - New features include tests
 - Documentation is updated
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
 ## Author
 
 **Sami**
@@ -432,5 +510,3 @@ Future enhancements planned:
 - [ ] Data quality validation tools
 
 ---
-
-**Made with ❤️ for the data engineering community**
