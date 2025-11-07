@@ -143,6 +143,19 @@ docker run -d \
   python -c "from datagen import generate_profiles, save_data; save_data(generate_profiles(10000), 'output/profiles.csv')"
 ```
 
+**4. Batch Data Generation**
+```bash
+# Generate multiple datasets in parallel
+docker run --rm -v $(pwd)/output:/app/output datagen:latest \
+  bash -c "
+    python -c 'from datagen import *; save_data(generate_profiles(5000), \"output/profiles.csv\")' &
+    python -c 'from datagen import *; save_data(generate_salaries(5000), \"output/salaries.csv\")' &
+    python -c 'from datagen import *; save_data(generate_regions(5000), \"output/regions.csv\")' &
+    python -c 'from datagen import *; save_data(generate_cars(1000), \"output/cars.csv\")' &
+    wait
+  "
+```
+
 ## Quick Start
 
 ### Basic Usage
