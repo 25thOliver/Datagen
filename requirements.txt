@@ -13,3 +13,5 @@ mypy>=1.0.0
 # Documentation
 sphinx>=6.0.0
 sphinx-rtd-theme>=1.2.0
+
+openpyxl>=3.0.0
