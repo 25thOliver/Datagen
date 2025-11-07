@@ -120,6 +120,13 @@ save_data(df, 'output/profiles.csv')
 # Stop container
 docker-compose down
 ```
+**2. CI/CD Pipeline**
+# Example GitHub Actions workflow
+- name: Build Docker image
+  run: docker build -t datagen:test .
+
+- name: Run tests in container
+  run: docker run --rm datagen:test pytest tests/ 
 
 ## Quick Start
 
