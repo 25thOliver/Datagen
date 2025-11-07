@@ -144,6 +144,7 @@ docker run -d \
 ```
 
 **4. Batch Data Generation**
+
 ```bash
 # Generate multiple datasets in parallel
 docker run --rm -v $(pwd)/output:/app/output datagen:latest \
@@ -155,6 +156,14 @@ docker run --rm -v $(pwd)/output:/app/output datagen:latest \
     wait
   "
 ```
+
+### Docker Best Practices
+
+**- Volume Mounting**: Mount your output directory to persist generated data
+**- Cache Volume**: Use named volumes for pip cache to speed up rebuilds
+**- Resource Limits**: Set memory/CPU limits for production deployments
+**- Multi-stage Builds**: For production, consider multi-stage builds to reduce image size
+**- Security**: Run as non-root user in production environments
 
 ## Quick Start
 
