@@ -13,14 +13,14 @@ def main():
     print("Profile Generator Example")
     print("-" * 60)
     
-    # Example 1: Generate 10 profiles with seed for reproducibility
+    # Example 1: Generate 20 profiles with seed for reproducibility
     print("\n1. Generating 10 profiles with seed=42...")
-    profiles = generate_profiles(n=10, seed=42, locale="en_KE")
+    profiles = generate_profiles(n=20, seed=42, locale="en_KE")
     print(profiles[['full_name', 'email', 'city', 'age']].to_string(index=False))
     
     # Example 2: Generate profiles and get as dictionary
-    print("\n2. Generating 5 profiles as dictionary...")
-    profiles_dict = generate_profiles(n=5, seed=123, output_format="dict")
+    print("\n2. Generating 20 profiles as dictionary...")
+    profiles_dict = generate_profiles(n=20, seed=123, output_format="dict")
     for i, profile in enumerate(profiles_dict[:2], 1):
         print(f"\nProfile {i}:")
         print(f"  Name: {profile['full_name']}")
