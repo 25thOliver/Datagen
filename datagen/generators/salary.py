@@ -1,8 +1,63 @@
+"""
+Synthetic salary data generator for the `datagen` library.
+
+This module generates realistic synthetic salary data for various job titles,
+levels (e.g., Junior, Mid, Senior), and compensation bands. It produces reproducible
+outputs when a random seed is provided and supports multiple output formats.
+
+Example:
+    >>> from datagen.generators.salary import generate_salaries
+    >>> df = generate_salaries(n=50, seed=123)
+    >>> print(df.head())
+
+Typical fields:
+    salary_id
+    employee_id
+    job_title
+    department
+    level
+    years_experience
+    base_salary
+    bonus
+    bonus_percentage
+    total_compensation
+    currency
+    effective_date
+"""
+
 from typing import Optional, Union, List, Dict
 import pandas as pd
 from faker import Faker
 import random
 from datagen.utils.io import save_data
+
+"""
+Generate synthetic salary records with deterministic reproducibility.
+
+    The function creates salary data across different roles and experience levels.
+    Salary bands are loosely modeled on real-world distributions, ensuring realistic
+    but anonymized compensation data.
+
+    Args:
+        n (int): Number of salary records to generate. Must be >= 1.
+        seed (Optional[int]): Random seed for reproducibility.
+        locale (str): Faker locale to control region/language (default: 'en_US').
+        output_format (str): Output format — one of ['dataframe', 'dict', 'csv', 'json'].
+
+    Returns:
+        Union[pd.DataFrame, List[Dict], str]: The generated salary dataset in the
+        requested format.
+
+    Raises:
+        ValueError: If `n < 1` or if `output_format` is invalid.
+
+    Example:
+        >>> df = generate_salaries(n=10, seed=42)
+        >>> df.columns
+        ['salary_id', 'employee_id', 'job_title', 'level', 'years_experience', 'department', 'base_salary',
+         'bonus', 'bonus_percenyage', 'total_compensation', 'currency', 'effective_date']
+"""
+
 
 # Job titles by department
 JOB_TITLES = {
