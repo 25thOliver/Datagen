@@ -10,7 +10,7 @@ A Python library for generating realistic synthetic datasets for testing, analyt
 - **Region Data** - Global regions with countries, timezones, and managers
 - **Car Data** - Vehicle information with make, model, year, and pricing
 
-🎯 **Key Capabilities:**
+**Key Capabilities:**
 - **Reproducible** - Deterministic output with seed control
 - **Flexible** - Multiple output formats (DataFrame, dict, CSV, JSON)
 - **Localized** - Kenya-focused data with local context
@@ -402,23 +402,17 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Email: os679736@gmail.com
 - GitHub: [@25thOliver](https://github.com/25thOliver)
 
-## Acknowledgments
-
-- Built with [Faker](https://github.com/joke2k/faker) for realistic data generation
-- Uses [pandas](https://pandas.pydata.org/) for data manipulation
-- Inspired by real-world data engineering needs
-
 ## Changelog
 
 ### Version 0.1.0 (Initial Release)
-- ✨ Profile generator with Kenya localization
-- ✨ Salary generator with 8 departments and 10 levels
-- ✨ Region generator with 6 global regions
-- ✨ Car generator with Kenya market focus
-- ✨ Multiple output format support
-- ✨ Reproducible generation with seed control
-- ✨ CLI interface for quick generation
-- 📚 Comprehensive documentation
+- Profile generator with Kenya localization
+- Salary generator with 8 departments and 10 levels
+- Region generator with 6 global regions
+- Car generator with Kenya market focus
+- Multiple output format support
+- Reproducible generation with seed control
+- CLI interface for quick generation
+- Comprehensive documentation
 
 ## Support
 
