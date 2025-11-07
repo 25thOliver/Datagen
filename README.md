@@ -121,12 +121,27 @@ save_data(df, 'output/profiles.csv')
 docker-compose down
 ```
 **2. CI/CD Pipeline**
+
 # Example GitHub Actions workflow
 - name: Build Docker image
   run: docker build -t datagen:test .
 
 - name: Run tests in container
   run: docker run --rm datagen:test pytest tests/ 
+
+**3. Production Deployment**
+
+```bash
+# Build production image
+docker build -t datagen:v0.1.0 .
+
+# Run as a service
+docker run -d \
+  --name datagen-service \
+  -v /path/to/output:/app/output \
+  datagen:v0.1.0 \
+  python -c "from datagen import generate_profiles, save_data; save_data(generate_profiles(10000), 'output/profiles.csv')"
+```
 
 ## Quick Start
 
