@@ -73,3 +73,15 @@ Thumbs.db
 
 # Docker
 *.log
+
+# -------------------------------------------------
+# Project-specific files (from your tree)
+# -------------------------------------------------
+# Ignore generated output from examples
+examples/output/
+
+# Ignore main generated output
+output/
+
+# Ignore Images for the article
+images/
