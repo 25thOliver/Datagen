@@ -45,6 +45,30 @@ def generate_profiles(
         "Thika", "Machakos", "Nyeri", "Garissa", "Naivasha"
     ]
 
+    def generate_kenyan_phone():
+        """
+        Generate a realistic Kenyan phone number in the  format +254xxxxxxxxx
+
+        Kenya mobile prefixes: 7xx or 1xx(Safaricom, Airtel or Telkom)
+        Fromat: +254 7xx xxx xxx or +254 1xx xxx xxx
+        """
+
+        # Commonn Kenyan mobile prefixes
+        prefixes = [
+            '700', '701', '702', '703', '704', '705', '706', '707', '708', '709',  # Safaricom
+            '710', '711', '712', '713', '714', '715', '716', '717', '718', '719',  # Safaricom
+            '720', '721', '722', '723', '724', '725', '726', '727', '728', '729',  # Safaricom
+            '740', '741', '742', '743', '745', '746', '748',  # Airtel
+            '750', '751', '752', '753', '754', '755', '756', '757', '758', '759',  # Airtel
+            '110', '111', '112', '113', '114', '115',  # Telkom
+        ]
+
+        prefix = random.choice(prefixes) 
+        # Generate the remaining 6 digits
+        remaining_digits = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+
+        return f"+254{prefix}{remaining_digits}"
+
     profiles = []
     genders = ['Male', 'Female', 'Non-binary']
 
@@ -94,7 +118,7 @@ def generate_profiles(
             'gender': gender,
             'date_of_birth': dob.strftime('%Y-%m-%d'),
             'age': age,
-            'phone': fake.phone_number(),
+            'phone': generate_kenyan_phone(),
             'street_address': street_address,
             'city': city,
             'state': state,
