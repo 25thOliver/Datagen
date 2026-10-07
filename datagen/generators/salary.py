@@ -160,7 +160,8 @@ def determine_level(job_title: str) -> str:
     
 # Salary Generator    
 def generate_salaries(
-        n: int=100,
+        n: int = 100,
+        employee_ids: Optional[List[str]] = None,
         seed: Optional[int] = None,
         locale: str = "en_KE",
         currency: str = "KES",
