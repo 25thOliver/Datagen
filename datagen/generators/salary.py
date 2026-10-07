@@ -261,7 +261,7 @@ def generate_salaries(
     elif output_format == 'csv':
         return df.to_csv(index=False)
     elif output_format == 'json':
-        return df.to_json(orient='records', indent=2))
+        return df.to_json(orient='records', indent=2)
         
 
 if __name__ == "__main__":
