@@ -233,7 +233,7 @@ def generate_salaries(
             # Create salary record
             salary_record = {
                 'salary_id': fake.uuid4(),
-                'employee_id': fake.uuid4(),
+                'employee_id': emp_id,
                 'job_title': job_title,
                 'department': department,
                 'level': level,
