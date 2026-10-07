@@ -167,99 +167,101 @@ def generate_salaries(
         currency: str = "KES",
         output_format: str = "dataframe"
 ) -> Union[pd.DataFrame, List[Dict], str]:
+    """Generate synthetic salary records with deterministic reproducibility."""
         
     # Validate inputs
-        if n < 1:
-            raise ValueError("Number of salary records (n) must be atleast 1")
-        
-        valid_formats = ['dataframe', 'dict', 'csv', 'json']
-        if output_format not in valid_formats:
-            raise ValueError(f"output_format must be one of {valid_formats}")
-        
-        # Pick correct ranges
-        LEVEL_RANGES =LEVEL_RANGES_KES if currency == "KES" else LEVEL_RANGES_USD
-        
-        # Initialize Faker with seed for reproducibility
-        fake = Faker(locale)
-        if seed is not None:
-            Faker.seed(seed)
-            random.seed(seed)
+    if n < 1:
+        raise ValueError("Number of salary records (n) must be at least 1")
+    
+    valid_formats = ['dataframe', 'dict', 'csv', 'json']
+    if output_format not in valid_formats:
+        raise ValueError(f"output_format must be one of {valid_formats}")
+    
+    # Pick correct ranges
+    LEVEL_RANGES = LEVEL_RANGES_KES if currency == "KES" else LEVEL_RANGES_USD
+    
+    # Initialize Faker with seed for reproducibility
+    fake = Faker(locale)
+    if seed is not None:
+        Faker.seed(seed)
+        random.seed(seed)
 
-        salaries = []
+    salaries = []
 
-        for _ in range(n):
-            # Select random department and job title
-            department = random.choice(list(JOB_TITLES.keys()))
-            job_title = random.choice(JOB_TITLES[department])
+    for i in range(n):
+        # Determine employee ID: use foreign key if provided, else generate random UUID
+        emp_id = employee_ids[i % len(employee_ids)] if employee_ids else fake.uuid4()
 
-            # Determine level based on job title
-            level = determine_level(job_title)
+        # Select random department and job title
+        department = random.choice(list(JOB_TITLES.keys()))
+        job_title = random.choice(JOB_TITLES[department])
 
-            # Get salary range for this level
-            salary_range = LEVEL_RANGES[level]
-            base_min, base_max = salary_range['base']
-            bonus_min, bonus_max = salary_range['bonus_pct']
+        # Determine level based on job title
+        level = determine_level(job_title)
 
-            # Generate base salary
-            base_salary = random.randint(base_min, base_max)
-            # Round to nearest 1000
-            base_salary = round(base_salary / 1000) * 1000
+        # Get salary range for this level
+        salary_range = LEVEL_RANGES[level]
+        base_min, base_max = salary_range['base']
+        bonus_min, bonus_max = salary_range['bonus_pct']
 
-            # Generate bonus
-            bonus_pct = random.uniform(bonus_min, bonus_max)
-            bonus = int(base_salary * (bonus_pct / 100))
-            # Round to nearest 100
-            bonus = round(bonus / 100) * 100
+        # Generate base salary
+        base_salary = random.randint(base_min, base_max)
+        base_salary = round(base_salary / 1000) * 1000
 
-            # Calculate total compensation
-            total_comp = base_salary + bonus
+        # Generate bonus
+        bonus_pct = random.uniform(bonus_min, bonus_max)
+        bonus = int(base_salary * (bonus_pct / 100))
+        bonus = round(bonus / 100) * 100
 
-            # Generate years of experience based on level
-            exp_ranges = {
-                'Junior': (0, 3),
-                'Mid': (2, 6),
-                'Senior': (5, 10),
-                'Lead': (7, 12),
-                'Principal': (10, 20),
-                'Manager': (5, 10),
-                'Senior Manager': (8, 15),
-                'Director': (10, 20),
-                'VP': (15, 25),
-                'C-Level': (20, 35)
-            }
-            exp_min, exp_max = exp_ranges[level]
-            years_exp = random.randint(exp_min, exp_max)
+        # Calculate total compensation
+        total_comp = base_salary + bonus
 
-            # Create salary record
-            salary_record = {
-                'salary_id': fake.uuid4(),
-                'employee_id': emp_id,
-                'job_title': job_title,
-                'department': department,
-                'level': level,
-                'years_experience': years_exp,
-                'base_salary': base_salary,
-                'bonus': bonus,
-                'bonus_percentage': round(bonus_pct, 2),
-                'total_compensation': total_comp,
-                'currency': currency,
-                'effective_date': fake.date_between(start_date='-2y', end_date='today').strftime('%Y-%m-%d')
-            }
+        # Generate years of experience based on level
+        exp_ranges = {
+            'Junior': (0, 3),
+            'Mid': (2, 6),
+            'Senior': (5, 10),
+            'Lead': (7, 12),
+            'Principal': (10, 20),
+            'Manager': (5, 10),
+            'Senior Manager': (8, 15),
+            'Director': (10, 20),
+            'VP': (15, 25),
+            'C-Level': (20, 35)
+        }
+        exp_min, exp_max = exp_ranges[level]
+        years_exp = random.randint(exp_min, exp_max)
 
-            salaries.append(salary_record)
-        
-        # Convert to requested format
-        if output_format == 'dict':
-            return salaries
-        
-        df = pd.DataFrame(salaries)
-        
-        if output_format == 'dataframe':
-            return df
-        elif output_format == 'csv':
-            return df.to_csv(index=False)
-        elif output_format == 'json':
-            return df.to_json(orient='records', indent=2)
+        # Create salary record
+        salary_record = {
+            'salary_id': fake.uuid4(),
+            'employee_id': emp_id,
+            'job_title': job_title,
+            'department': department,
+            'level': level,
+            'years_experience': years_exp,
+            'base_salary': base_salary,
+            'bonus': bonus,
+            'bonus_percentage': round(bonus_pct, 2),
+            'total_compensation': total_comp,
+            'currency': currency,
+            'effective_date': fake.date_between(start_date='-2y', end_date='today').strftime('%Y-%m-%d')
+        }
+
+        salaries.append(salary_record)
+    
+    # Convert to requested format
+    if output_format == 'dict':
+        return salaries
+    
+    df = pd.DataFrame(salaries)
+    
+    if output_format == 'dataframe':
+        return df
+    elif output_format == 'csv':
+        return df.to_csv(index=False)
+    elif output_format == 'json':
+        return df.to_json(orient='records', indent=2))
         
 
 if __name__ == "__main__":
