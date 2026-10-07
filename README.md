@@ -11,12 +11,15 @@ Datagen provides modular data generators for creating synthetic datasets with lo
 * Mocking tabular data for analytics dashboards and reports
 * Creating deterministic, reproducible test datasets for application development
 
-## Current Features
+## Key Features
 
 * **Localized Synthetic Data:** Built-in localization support, with a specific focus on Kenyan domain data (mobile phone numbers, geographic coordinates, cities, automotive market data, and KES currency compensation bands).
+* **Command-Line Interface (CLI):** Full CLI tool (`datagen`) for generating datasets directly from the terminal.
+* **Relational Foreign Key Support:** Generate linked datasets (e.g. employee salary records referencing valid profile IDs) to maintain referential integrity across tables.
 * **Deterministic Reproducibility:** Support for random seed parameters across generators to ensure reproducible outputs across test runs.
 * **Multiple Output Formats:** Generates data directly as Pandas DataFrames, Python lists of dictionaries, CSV strings, or JSON strings.
 * **Export Utility:** Built-in export helper to write datasets to CSV, JSON, Excel, and Parquet formats.
+* **Automated CI/CD & Testing:** Automated test suite with `pytest` and continuous integration via GitHub Actions.
 
 ## Generated Datasets
 
@@ -34,6 +37,7 @@ Generates synthetic user profile data localized to Kenya.
 Generates synthetic employee compensation records across departments and experience levels.
 
 * **Supported Fields:** `salary_id`, `employee_id`, `job_title`, `department`, `level`, `years_experience`, `base_salary`, `bonus`, `bonus_percentage`, `total_compensation`, `currency`, `effective_date`.
+* **Relational Capability:** Supports foreign keys via the optional `employee_ids` parameter, allowing generated salary records to reference valid primary keys from `generate_profiles`.
 * **Implementation Note:** Job titles map to 8 standard organizational departments (Engineering, Product, Data, Marketing, Sales, Operations, Finance, HR). Base salaries and bonus percentages are calculated using predefined ranges per seniority level (`Junior` through `C-Level`) in KES or USD, rather than a fitted statistical distribution model.
 
 ### Regions (`generate_regions`)
@@ -49,6 +53,24 @@ Generates synthetic vehicle inventory data focused on common models in the Kenya
 
 * **Supported Fields:** `car_id`, `make`, `model`, `year`, `color`, `transmission_type`, `fuel_type`, `assembled_in`, `dealer_city`, `price_kes`.
 * **Implementation Note:** Includes popular makes and models (Toyota Corolla/Probox, Nissan Note, Mazda Demio, Subaru Forester, Isuzu D-Max, etc.) across major dealer cities. Vehicle prices use a baseline value adjusted by a linear annual depreciation heuristic (`3%` reduction per year relative to 2025), rather than an advanced economic pricing model.
+
+## Relational Data & Foreign Keys
+
+Datagen supports generating relational datasets where child tables reference parent table primary keys:
+
+```python
+from datagen import generate_profiles, generate_salaries
+
+# 1. Generate parent profiles table
+profiles = generate_profiles(n=10, seed=42)
+profile_ids = profiles['profile_id'].tolist()
+
+# 2. Generate child salaries table referencing parent profile IDs
+salaries = generate_salaries(n=10, employee_ids=profile_ids, seed=42)
+
+# Verify referential integrity
+assert set(salaries['employee_id']).issubset(set(profiles['profile_id']))
+```
 
 ## Reproducible Generation
 
@@ -101,7 +123,26 @@ cd Datagen
 pip install -e .
 ```
 
-*Note: The project packaging currently has version metadata differences across files (`0.1.1` in `pyproject.toml` vs `0.1.0` in `setup.py`).*
+## Command-Line Interface (CLI)
+
+Datagen includes a command-line interface (`datagen`) for generating datasets directly from your terminal:
+
+```bash
+# View CLI help menu
+datagen --help
+
+# Generate user profiles
+datagen profiles --count 50 --seed 42 --output profiles.csv
+
+# Generate salaries in KES
+datagen salaries --count 50 --currency KES --output salaries.json
+
+# Generate global region metadata
+datagen regions --output regions.csv
+
+# Generate vehicle inventory
+datagen cars --count 25 --output cars.parquet
+```
 
 ## Usage
 
@@ -118,24 +159,32 @@ from datagen import (
 
 # Generate 50 Kenya user profiles
 profiles = generate_profiles(n=50, seed=42, locale="en_KE")
-print(profiles.head())
+profile_ids = profiles['profile_id'].tolist()
 
-# Generate 50 salary records in KES
-salaries = generate_salaries(n=50, seed=42, currency="KES")
-print(salaries.head())
+# Generate 50 salary records linked to the generated profiles
+salaries = generate_salaries(n=50, employee_ids=profile_ids, seed=42, currency="KES")
 
 # Generate global region metadata
 regions = generate_regions(seed=42, include_all=True)
-print(regions.head())
 
 # Generate 50 car records for the Kenyan market
 cars = generate_cars(n=50, seed=42)
-print(cars.head())
 
 # Save datasets to disk
 save_data(profiles, "output/profiles.csv")
 save_data(salaries, "output/salaries.json")
 save_data(cars, "output/cars.parquet")
+```
+
+## Testing & CI/CD
+
+Datagen includes an automated test suite managed by `pytest` and continuous integration via GitHub Actions.
+
+### Running Tests Locally
+
+```bash
+pip install -e ".[dev]"
+pytest
 ```
 
 ## Docker / Local Development
@@ -152,40 +201,21 @@ docker-compose up -d
 docker-compose exec datagen bash
 
 # Inside container:
+pytest
 python examples/complete_demo.py
 ```
 
-*Note: Docker in this project provides an isolated container environment for development. It is not currently configured as a production service or background worker system.*
-
 ## Current Limitations
 
-This project is in early-stage development. Key limitations of the current codebase include:
+Key considerations for current usage:
 
-* **CLI Unavailable:** A command-line entry point is registered in packaging config, but `datagen/cli.py` is not yet implemented. CLI commands (`datagen ...`) do not work currently.
-* **No Automated Test Suite:** Unit tests and automated test execution (`pytest`) are not yet implemented.
-* **No CI/CD Pipeline:** GitHub Actions automated build/test workflows are not yet configured.
-* **No Relational Integrity / Foreign Keys:** Generators create isolated datasets. Primary keys (such as `profile_id` and `employee_id`) are independent UUIDs and do not maintain cross-table relationships.
 * **In-Memory Processing:** Datasets are generated entirely in memory before export. Large dataset generation is constrained by available RAM.
 * **Rule-Based Modeling:** Salary bands use fixed ranges per job level, and car prices use a basic linear depreciation heuristic rather than fitted statistical distributions or economic market models.
-* **Version Metadata Mismatch:** Package versions differ between `pyproject.toml` (`0.1.1`), `setup.py` (`0.1.0`), and `datagen/__init__.py` (`0.1.0`).
 
-## Planned Improvements
+## Future Roadmap
 
-Future development on Datagen is planned across the following priorities:
+Planned enhancements for future releases:
 
-### Priority 1 — Core Package Quality
-* Implement `datagen/cli.py` to fix the broken CLI entry point.
-* Add an automated unit test suite using `pytest` to cover generators, seed reproducibility, and file exports.
-* Harmonize package version metadata across `pyproject.toml`, `setup.py`, and `datagen/__init__.py`.
-* Set up a GitHub Actions CI workflow to run tests and linters automatically on pull requests.
-
-### Priority 2 — Functionality & Refactoring
-* Introduce relational data generation to support foreign keys and referential integrity between generated entities.
-* Refactor shared generator logic (input validation, seed setting, format conversion) into reusable base utilities.
-* Transition print statements to standard Python `logging`.
-* Improve Docker development practices (add `.dockerignore` and non-root user execution).
-
-### Future Roadmap
-* Implement streaming/batch generation to write large datasets directly to disk.
-* Add statistical probability distributions (e.g. log-normal distributions for salary and price modeling).
-* Establish performance benchmarks for generation throughput and RAM usage.
+* **Batch & Streaming Generation:** Implement chunked generator streaming to write multi-million row datasets directly to disk without memory constraints.
+* **Statistical Distribution Models:** Replace fixed salary/price ranges with log-normal or beta probability distributions for enhanced statistical realism.
+* **Performance Benchmarking:** Publish benchmark suites measuring generation throughput (records/sec) and memory footprints across dataset sizes.
