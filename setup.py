@@ -12,7 +12,7 @@ with open(os.path.join(this_directory, "requirements.txt"), encoding="utf-8") as
 
 setup(
     name="sami-datagen",
-    version="0.1.0",
+    version="0.1.1",
     author="Sami",
     author_email="os679736@gmail.com",
     description="A Python library for generating realistic synthetic datasets",
