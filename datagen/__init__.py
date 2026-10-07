@@ -7,7 +7,7 @@ analytics, and machine learning experiments.
 Author: Sami
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 # Import all generators for easy access
 from datagen.generators.profile import generate_profiles
